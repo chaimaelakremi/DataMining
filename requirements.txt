@@ -1,0 +1,21 @@
+# Serveur
+fastapi>=0.110
+uvicorn>=0.29
+python-multipart>=0.0.9     # import de fichiers (POST /api/upload)
+
+# Traitement du signal et modèles (mêmes bibliothèques que le notebook)
+numpy>=1.26
+scipy>=1.11
+pandas>=2.1
+scikit-learn>=1.4
+joblib>=1.3
+openpyxl>=3.1               # lecture de « Annotations MAJ.xlsx »
+
+# Notebook EEG_Absence_Detection.ipynb en local (VS Code)
+matplotlib>=3.8
+seaborn>=0.13
+ipykernel>=6.29             # noyau Jupyter du .venv
+xgboost>=2.0
+lightgbm>=4.3
+shap>=0.46                  # explicabilité (section « Analyses de recherche »)
+torch>=2.2                  # autoencodeur (section « Des crises que personne n’a annotées ? »), version CPU suffisante

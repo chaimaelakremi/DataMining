@@ -1,0 +1,562 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Absences · détection des crises sur l’EEG</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,300..600,0..100,0..1;1,9..144,300..600,0..100,0..1&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/static/style.css?v=23">
+</head>
+<body>
+<a class="skip" href="#page">Aller au contenu</a>
+
+<header class="site-head">
+  <a class="site-brand" href="#/accueil"><span class="brand-name">Absences</span><span class="brand-tag">EEG · détection des crises</span></a>
+  <nav class="site-nav" aria-label="Pages">
+    <a href="#/accueil" data-page="accueil">Accueil</a>
+    <a href="#/comprendre" data-page="comprendre">Comprendre</a>
+    <a href="#/methode" data-page="methode">Méthode</a>
+    <a href="#/lecture" data-page="lecture">Lecture</a>
+    <a href="#/laboratoire" data-page="laboratoire">Laboratoire</a>
+    <a href="#/patients" data-page="patients">Patients</a>
+    <a href="#/erreurs" data-page="erreurs">Erreurs</a>
+    <a href="#/decouverte" data-page="decouverte">Découverte</a>
+    <a href="#/anticipation" data-page="anticipation">Anticipation</a>
+    <a href="#/modeles" data-page="modeles">Modèles</a>
+    <a href="#/recherche" data-page="recherche">Recherche</a>
+    <a href="#/limites" data-page="limites">Limites</a>
+  </nav>
+</header>
+
+<main id="page" tabindex="-1">
+
+  <!-- ===================================================== 1. Accueil -->
+  <section class="page page-accueil" id="page-accueil" data-title="Accueil" hidden>
+    <div class="home-hero">
+      <div class="home-text">
+        <p class="kicker">Mini-projet data mining · ENIT</p>
+        <h1 class="display">Repérer les crises d’absence dans un&nbsp;EEG</h1>
+        <p class="lede">Une absence est une crise d’épilepsie très brève : pendant quelques secondes, le patient (le plus souvent un enfant) s’interrompt, le regard fixe, puis reprend ce qu’il faisait sans s’en souvenir. Sur l’électroencéphalogramme, elle se traduit par des pointes-ondes régulières qui apparaissent sur toutes les voies en même temps.</p>
+        <p class="body" id="home-why"></p>
+        <p class="body" id="home-what"></p>
+      </div>
+      <figure class="home-figure">
+        <canvas id="home-trace" aria-label="Extrait réel d’EEG : début d’une crise d’absence"></canvas>
+        <figcaption id="home-trace-cap" class="caption"></figcaption>
+      </figure>
+    </div>
+    <div class="home-figures" id="home-figures" aria-live="polite"></div>
+    <nav class="home-paths" aria-label="Par où commencer">
+      <a href="#/comprendre"><span class="path-title">Comprendre une absence</span><span class="path-text">À quoi ressemble une crise sur le tracé, et ce qui n’en est pas une.</span></a>
+      <a href="#/lecture"><span class="path-title">Explorer un enregistrement</span><span class="path-text">Faire défiler un EEG réel et lancer la détection.</span></a>
+      <a href="#/laboratoire"><span class="path-title">Laboratoire en direct</span><span class="path-text">Rejouer un EEG en temps réel, régler la détection, mettre le modèle à l’épreuve.</span></a>
+      <a href="#/patients"><span class="path-title">Voir les résultats</span><span class="path-text">Les enregistrements un par un, puis les erreurs du modèle.</span></a>
+      <a href="#/anticipation"><span class="path-title">Anticiper une crise</span><span class="path-text">Essai exploratoire : peut-on l’annoncer avant son début ?</span></a>
+    </nav>
+  </section>
+
+  <!-- ===================================================== 2. Comprendre -->
+  <section class="page page-article" id="page-comprendre" data-title="Comprendre une absence" hidden>
+    <header class="article-head">
+      <p class="kicker">Comprendre</p>
+      <h1 class="display">À quoi ressemble une absence sur l’EEG</h1>
+      <p class="lede">Les extraits de cette page sont réels. Ils viennent tous du même enregistrement, <a class="mono" id="cmp-rec-link" href="#/lecture/230102B-F">230102B-F</a>, filtré comme pour la détection (0,5 à 40 Hz).</p>
+    </header>
+    <div id="cmp-body"></div>
+  </section>
+
+  <!-- ===================================================== 3. Méthode -->
+  <section class="page page-method" id="page-methode" data-title="Méthode" hidden>
+    <header class="article-head">
+      <p class="kicker">Méthode</p>
+      <h1 class="display">Du signal aux crises, étape par étape</h1>
+      <p class="lede" id="mth-lede"></p>
+    </header>
+    <div id="mth-body"></div>
+  </section>
+
+  <!-- ===================================================== 4. Lecture -->
+  <section class="page page-lecture" id="page-lecture" data-title="Lecture" hidden>
+    <div class="shell">
+      <aside class="index" aria-label="Enregistrements">
+        <div class="index-head" aria-hidden="true">
+          <span>Tracé</span><span class="num">Crises</span><span class="num">Durée</span>
+        </div>
+        <ol id="rec-list" class="rec-list" role="listbox" aria-label="Choisir un enregistrement">
+          <li class="rec-empty">Chargement de la liste…</li>
+        </ol>
+        <p id="index-total" class="index-total"></p>
+        <div class="upload">
+          <input type="file" id="file-input" accept=".mat" class="visually-hidden">
+          <label for="file-input" class="link-btn" id="upload-label" tabindex="0">Importer un fichier .mat externe</label>
+          <p class="upload-hint">Timetable MATLAB <span class="mono">…_0000d.mat</span>. Analysé avec le modèle complet, sans annotation ni journal.</p>
+          <p id="upload-status" class="upload-status" role="status" aria-live="polite"></p>
+        </div>
+      </aside>
+
+      <div class="main">
+        <nav class="tabs" role="tablist" aria-label="Vues de l’enregistrement">
+          <button role="tab" id="tab-lecture" data-view="lecture" aria-selected="true"><span class="tab-n">i</span>Tracé</button>
+          <button role="tab" id="tab-analyse" data-view="analyse" aria-selected="false"><span class="tab-n">ii</span>Analyse</button>
+          <span class="rec-pn" id="rec-pn"></span>
+        </nav>
+
+        <section id="view-rec" class="view-rec" aria-labelledby="rec-title">
+          <header class="rec-head">
+            <div class="rec-id">
+              <p class="kicker" id="rec-kicker">Enregistrement</p>
+              <h2 class="rec-title" id="rec-title">—</h2>
+              <p class="rec-meta mono" id="rec-meta"></p>
+            </div>
+            <div class="rec-actions">
+              <div class="tool tool-awin" id="awin-tool" role="group" aria-label="Taille des fenêtres d’analyse" hidden
+                   title="Longueur des tranches de signal que le modèle classe une à une. 2 s est le réglage du notebook ; changer de taille relance l’analyse.">
+                <span class="tool-label">Fenêtres d’analyse</span>
+                <span class="seg" id="awin-seg"></span>
+              </div>
+              <button id="analyse-btn" class="btn" type="button" disabled>Analyser l’enregistrement</button>
+            </div>
+          </header>
+
+          <p class="voies-banner" id="voies-banner" role="note" hidden></p>
+          <div class="toolbar" role="toolbar" aria-label="Réglages du tracé">
+            <div class="tool" role="group" aria-label="Durée affichée">
+              <span class="tool-label">Durée affichée</span>
+              <span class="seg" id="win-seg">
+                <button type="button" data-win="10" aria-pressed="false">10 s</button>
+                <button type="button" data-win="20" aria-pressed="true">20 s</button>
+                <button type="button" data-win="60" aria-pressed="false">60 s</button>
+              </span>
+            </div>
+            <div class="tool" role="group" aria-label="Sensibilité">
+              <span class="tool-label" title="Amplitude représentée par un petit carreau (1 mm) de la grille">Sensibilité</span>
+              <button type="button" class="step" id="sens-down" aria-label="Réduire l’amplitude du tracé">−</button>
+              <output id="sens-val" class="mono sens-val">—</output>
+              <button type="button" class="step" id="sens-up" aria-label="Augmenter l’amplitude du tracé">+</button>
+            </div>
+            <div class="tool tool-pop">
+              <button type="button" class="link-btn" id="ch-btn" aria-expanded="false" aria-controls="ch-pop">Voies <span id="ch-count" class="mono"></span></button>
+              <div id="ch-pop" class="pop ch-pop" hidden>
+                <div class="pop-head">
+                  <span class="tool-label">Voies affichées</span>
+                  <button type="button" class="link-btn" id="ch-all">toutes</button>
+                  <button type="button" class="link-btn" id="ch-none">aucune</button>
+                </div>
+                <div id="ch-list" class="ch-list"></div>
+              </div>
+            </div>
+            <div class="tool tool-pop">
+              <button type="button" class="link-btn" id="keys-btn" aria-expanded="false" aria-controls="keys-pop">Raccourcis</button>
+              <div id="keys-pop" class="pop keys-pop" hidden>
+                <p class="tool-label pop-title">Raccourcis clavier</p>
+                <dl class="keys-list">
+                  <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>reculer, avancer d’une demi-fenêtre</dd>
+                  <dt><kbd>Maj</kbd> + <kbd>←</kbd> <kbd>→</kbd></dt><dd>d’une fenêtre entière</dd>
+                  <dt><kbd>Début</kbd> <kbd>Fin</kbd></dt><dd>début, fin de l’enregistrement</dd>
+                  <dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>resserrer, élargir la fenêtre (10, 20, 60 s)</dd>
+                  <dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>augmenter, réduire l’amplitude</dd>
+                  <dt><kbd>A</kbd></dt><dd>afficher, masquer les crises annotées</dd>
+                  <dt><kbd>D</kbd></dt><dd>afficher, masquer les crises détectées</dd>
+                  <dt><kbd>J</kbd></dt><dd>afficher, masquer le journal d’examen</dd>
+                  <dt><kbd>Échap</kbd></dt><dd>fermer ce panneau</dd>
+                </dl>
+                <p class="pop-note">Le tracé se déplace aussi en le faisant glisser à la souris.</p>
+              </div>
+            </div>
+            <div class="tool tool-pos">
+              <span class="mono" id="pos-label" aria-live="polite"></span>
+            </div>
+          </div>
+
+          <div class="viewer" id="viewer">
+            <div class="loading-line" id="viewer-loading" hidden></div>
+            <canvas id="eeg-canvas" tabindex="0" role="img" aria-label="Tracé EEG multicanal. Flèches gauche et droite pour se déplacer dans le temps."></canvas>
+            <div class="viewer-msg" id="viewer-msg" hidden><p class="msg-title" id="msg-title"></p><p class="msg-hint" id="msg-hint"></p></div>
+            <div class="tip" id="eeg-tip" hidden></div>
+          </div>
+
+          <div class="anom-wrap" id="anom-wrap" hidden><canvas id="anom-canvas" aria-label="Score d’anomalie de l’autoencodeur sous le tracé"></canvas></div>
+
+          <div class="overview" id="overview">
+            <canvas id="mini-canvas" tabindex="0" role="slider" aria-label="Vue d’ensemble de l’enregistrement. Glisser le cadre lavande pour naviguer ; flèches pour se déplacer." aria-valuemin="0"></canvas>
+            <div class="tip" id="mini-tip" hidden></div>
+          </div>
+
+          <div class="legend" id="legend" role="group" aria-label="Légende et calques">
+            <span class="tool-label">Calques</span>
+            <button type="button" class="layer" id="layer-annot" aria-pressed="true" title="Touche A"><span class="sw sw-annot" aria-hidden="true"></span>crises annotées</button>
+            <button type="button" class="layer" id="layer-det" aria-pressed="true" title="Touche D"><span class="sw sw-det" aria-hidden="true"></span>crises détectées</button>
+            <button type="button" class="layer" id="layer-journal" aria-pressed="true" title="Touche J"><span class="sw sw-journal" aria-hidden="true"></span>journal d’examen</button>
+            <button type="button" class="layer" id="layer-anom" aria-pressed="false" title="Score de l’autoencodeur (page Découverte)"><span class="sw sw-anom" aria-hidden="true"></span>courbe d’anomalie</button>
+            <span class="legend-notes">
+              <span><span class="sw sw-both" aria-hidden="true"></span>annotée et détectée</span>
+              <span><span class="sw sw-sat" aria-hidden="true"></span>saturation</span>
+              <span><span class="sw sw-win" aria-hidden="true"></span>fenêtre affichée</span>
+              <span class="legend-grid mono">grille 1 s × 1 mm</span>
+            </span>
+          </div>
+
+          <section id="analysis" class="analysis" aria-label="Analyse automatique" hidden>
+            <div class="pipeline" id="pipeline" aria-live="polite">
+              <ol class="steps" id="steps"></ol>
+              <div class="progress" aria-hidden="true"><span id="progress-bar"></span></div>
+              <p class="step-detail mono" id="step-detail"></p>
+            </div>
+            <div class="empty" id="analysis-empty" hidden>
+              <p class="empty-title" id="empty-title"></p>
+              <p class="empty-text" id="empty-text"></p>
+            </div>
+            <div class="results" id="results" hidden>
+              <div class="res-summary">
+                <p class="kicker">Résultat</p>
+                <p class="headline" id="headline"></p>
+                <p class="subline" id="subline"></p>
+                <div class="context" id="context" hidden>
+                  <p class="kicker">Contexte de l’examen</p>
+                  <ul class="context-list" id="context-list"></ul>
+                </div>
+                <p class="provenance" id="provenance"></p>
+                <button type="button" class="link-btn" id="export-btn">Exporter les intervalles détectés (CSV)</button>
+              </div>
+              <div class="res-detected">
+                <h3 class="h3">Crises détectées <span class="h3-note">cliquer une ligne pour l’afficher</span></h3>
+                <table class="tbl" id="det-table">
+                  <thead><tr><th class="num">N°</th><th class="num">Début</th><th class="num">Fin</th><th class="num">Durée</th><th>Statut</th></tr></thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+              <div class="res-match" id="match-block">
+                <h3 class="h3">Confrontation aux annotations <span class="h3-note">retard positif : détection plus tardive que l’annotation</span></h3>
+                <table class="tbl" id="match-table">
+                  <thead><tr>
+                    <th class="num">Crise</th><th class="num">Début réel</th><th class="num">Fin réelle</th>
+                    <th class="num">Début détecté</th><th class="num">Fin détectée</th>
+                    <th class="num">Retard début</th><th class="num">Écart fin</th><th>Résultat</th>
+                  </tr></thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </section>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 4 bis. Laboratoire -->
+  <section class="page page-lab" id="page-laboratoire" data-title="Laboratoire" hidden>
+    <header class="article-head wide lab-head">
+      <p class="kicker">Laboratoire · démonstrations calculées en direct</p>
+      <h1 class="display">Le modèle à l’épreuve, sous vos yeux</h1>
+      <p class="lede">Rien n’est préparé à l’avance : chaque chiffre de cette page est calculé au moment où vous le demandez, par la même chaîne que le reste du site et avec le modèle entraîné sans l’enregistrement montré.</p>
+    </header>
+    <nav class="r-toc lab-tabs" role="tablist" aria-label="Démonstrations">
+      <button type="button" role="tab" data-tab="temps-reel" aria-selected="true"><span class="r-toc-n">1</span>Temps réel</button>
+      <button type="button" role="tab" data-tab="reglages" aria-selected="false"><span class="r-toc-n">2</span>Réglages</button>
+      <button type="button" role="tab" data-tab="stress" aria-selected="false"><span class="r-toc-n">3</span>Stress test</button>
+      <button type="button" role="tab" data-tab="electrodes" aria-selected="false"><span class="r-toc-n">4</span>Électrodes</button>
+      <button type="button" role="tab" data-tab="augmentation" aria-selected="false"><span class="r-toc-n">5</span>Augmentation</button>
+    </nav>
+
+    <!-- ---------- 1. Temps réel ---------- -->
+    <div class="lab-pane" id="lab-temps-reel" role="tabpanel" data-tab="temps-reel">
+      <p class="lab-banner" role="note"><b>Détection en direct.</b> Le tracé est rejoué seconde par seconde ; chaque nouvelle fenêtre est filtrée, décrite par ses 17 caractéristiques et classée par le modèle à l’instant même.<br>C’est la situation d’un moniteur au chevet du patient : le modèle ne voit jamais l’avenir, et les crises annotées par le médecin n’apparaissent qu’une fois passées.</p>
+      <div class="filters lab-controls" role="group" aria-label="Commandes de lecture">
+        <label class="field"><span class="tool-label">Enregistrement</span><select id="lt-rec"></select></label>
+        <label class="field"><span class="tool-label">Début</span><input id="lt-start" class="lab-num" type="number" min="0" step="1" value="0" aria-describedby="lt-start-clock"><span class="mono lab-dim" id="lt-start-clock">00:00</span></label>
+        <button type="button" class="btn" id="lt-play">Lecture</button>
+        <button type="button" class="btn btn-quiet" id="lt-restart">Recommencer</button>
+        <span class="field"><span class="tool-label">Vitesse</span>
+          <span class="seg" id="lt-speed"><button type="button" data-v="1" aria-pressed="true">×1</button><button type="button" data-v="2" aria-pressed="false">×2</button><button type="button" data-v="5" aria-pressed="false">×5</button><button type="button" data-v="10" aria-pressed="false">×10</button></span></span>
+        <button type="button" class="btn btn-quiet" id="lt-next">Passer à la prochaine crise</button>
+        <label class="field check"><input type="checkbox" id="lt-beep"> bip sonore</label>
+      </div>
+      <div class="lab-live">
+        <div class="lab-live-main">
+          <figure class="lab-card lab-monitor" id="lt-monitor">
+            <div class="lab-card-head"><span class="h3">EEG en direct <span class="h3-note" id="lt-pos">—</span></span><span class="lab-dim" id="lt-buffer"></span></div>
+            <canvas id="lt-eeg" class="lab-eeg" role="img" aria-label="Moniteur EEG : 19 voies, 10 dernières secondes, curseur mobile"></canvas>
+            <p class="lab-legend"><span><span class="sw sw-annot" aria-hidden="true"></span>crise annotée (révélée une fois passée)</span><span><span class="sw sw-det" aria-hidden="true"></span>détection du modèle</span><span class="lab-dim" id="lt-lag"></span></p>
+          </figure>
+          <figure class="lab-card">
+            <div class="lab-card-head"><span class="h3">Probabilité de crise <span class="h3-note">60 dernières secondes, une valeur par fenêtre</span></span></div>
+            <canvas id="lt-strip" class="lab-strip" role="img" aria-label="Probabilité de crise des 60 dernières secondes, seuil 0,5"></canvas>
+          </figure>
+        </div>
+        <aside class="lab-live-side">
+          <div class="lab-card lab-status" id="lt-status" aria-live="polite">
+            <p class="tool-label">État</p>
+            <p class="lab-status-v" id="lt-status-v">En attente</p>
+            <p class="lab-status-s" id="lt-status-s">Appuyez sur Lecture.</p>
+          </div>
+          <div class="lab-card lab-gauge-card">
+            <p class="tool-label">Dernière fenêtre</p>
+            <svg id="lt-gauge" class="lab-gauge" viewBox="0 0 220 146" role="img" aria-label="Jauge de probabilité"></svg>
+          </div>
+          <div class="lab-card lab-counters">
+            <p class="tool-label">Depuis le début de la lecture</p>
+            <dl id="lt-counters"></dl>
+            <p class="lab-dim lab-small" id="lt-model"></p>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <!-- ---------- 2. Réglages ---------- -->
+    <div class="lab-pane" id="lab-reglages" role="tabpanel" data-tab="reglages" hidden>
+      <p class="lab-banner" role="note"><b>Réglages en direct.</b> Chaque curseur refait la détection complète des 19 enregistrements annotés à partir des probabilités du modèle « sans l’enregistrement ».<br>On voit ainsi le prix de chaque choix : plus de crises trouvées se paie en fausses alarmes, et le réglage du projet n’est qu’un point de ce compromis.</p>
+      <div class="lab-tune">
+        <div class="lab-card lab-sliders" id="rg-controls">
+          <div class="field lab-field-col"><span class="tool-label">Modèle</span>
+            <span class="seg" id="rg-model"><button type="button" data-v="rf" aria-pressed="true">Random Forest</button><button type="button" data-v="et" aria-pressed="false">Extra Trees</button></span></div>
+          <label class="lab-slider"><span class="tool-label">Seuil de décision</span><input type="range" id="rg-thr" min="0.05" max="0.95" step="0.05" value="0.5"><output id="rg-thr-v"></output></label>
+          <label class="lab-slider"><span class="tool-label">Lissage médian</span><input type="range" id="rg-smooth" min="0" max="3" step="1" value="1"><output id="rg-smooth-v"></output></label>
+          <label class="lab-slider"><span class="tool-label">Fusion si écart ≤</span><input type="range" id="rg-gap" min="0" max="5" step="0.5" value="1"><output id="rg-gap-v"></output></label>
+          <label class="lab-slider"><span class="tool-label">Durée minimale</span><input type="range" id="rg-min" min="0" max="6" step="0.5" value="2"><output id="rg-min-v"></output></label>
+          <div class="lab-row"><button type="button" class="btn btn-quiet" id="rg-reset">Réinitialiser</button><span class="lab-dim lab-small" id="rg-time"></span></div>
+        </div>
+        <div class="lab-tune-out">
+          <div class="kpis lab-kpis" id="rg-kpis"></div>
+          <p class="lab-small lab-dim" id="rg-check"></p>
+        </div>
+      </div>
+      <div class="lab-two">
+        <figure class="lab-card">
+          <div class="lab-card-head"><span class="h3">Compromis sensibilité / fausses alarmes <span class="h3-note">le seuil varie de 0,05 à 0,95</span></span></div>
+          <div id="rg-curve" class="lab-curve"></div>
+          <div class="tip lab-tip" id="rg-tip" hidden></div>
+        </figure>
+        <div>
+          <h3 class="h3">Par enregistrement <span class="h3-note">en couleur : différent du réglage du projet</span></h3>
+          <div class="tbl-scroll"><table class="tbl lab-tbl" id="rg-table"><thead><tr><th>Enregistrement</th><th class="num">Crises</th><th class="num">Détectées</th><th class="num" title="Fausses alarmes">F. alarmes</th><th class="num" title="Retard moyen au début des crises détectées">Retard</th></tr></thead><tbody></tbody><tfoot></tfoot></table></div>
+        </div>
+      </div>
+      <div id="rg-msg"></div>
+    </div>
+
+    <!-- ---------- 3. Stress test ---------- -->
+    <div class="lab-pane" id="lab-stress" role="tabpanel" data-tab="stress" hidden>
+      <p class="lab-banner" role="note"><b>Stress test.</b> On ajoute à un passage normal un artefact courant ou une fausse crise de synthèse, puis on fait passer le résultat par toute la chaîne.<br>Un bon détecteur ne doit pas s’alarmer pour un clignement d’yeux, mais doit reconnaître une décharge pointe-onde, même artificielle.</p>
+      <p class="lab-safe" role="note">Données d’origine intactes : les injections sont faites dans une copie de l’extrait, en mémoire. Aucun fichier n’est modifié.</p>
+      <div class="filters lab-controls" role="group" aria-label="Choix de l’extrait">
+        <label class="field"><span class="tool-label">Enregistrement</span><select id="st-rec"></select></label>
+        <label class="field"><span class="tool-label">Extrait de 10 s à partir de</span><input id="st-start" class="lab-num" type="number" min="0" step="1"><span class="mono lab-dim" id="st-start-clock"></span></label>
+        <button type="button" class="btn btn-quiet" id="st-calm">Extrait calme automatique</button>
+        <span class="lab-dim lab-small" id="st-calm-info"></span>
+      </div>
+
+      <section class="lab-sec">
+        <h2 class="h2 lab-h2"><span class="lab-letter">a</span>Artefacts</h2>
+        <div class="lab-art-btns" id="st-arts"></div>
+        <div id="st-art-out"></div>
+      </section>
+
+      <section class="lab-sec">
+        <h2 class="h2 lab-h2"><span class="lab-letter">b</span>Décharge pointe-onde synthétique</h2>
+        <div class="lab-synth">
+          <div class="lab-card lab-sliders">
+            <label class="lab-slider"><span class="tool-label">Fréquence</span><input type="range" id="sy-freq" min="2" max="5" step="0.25" value="3"><output id="sy-freq-v"></output></label>
+            <label class="lab-slider"><span class="tool-label">Amplitude (voies frontales)</span><input type="range" id="sy-amp" min="20" max="400" step="10" value="300"><output id="sy-amp-v"></output></label>
+            <label class="lab-slider"><span class="tool-label">Durée</span><input type="range" id="sy-dur" min="2" max="15" step="1" value="6"><output id="sy-dur-v"></output></label>
+            <label class="lab-slider"><span class="tool-label">Régularité</span><input type="range" id="sy-reg" min="0" max="1" step="0.1" value="0.8"><output id="sy-reg-v"></output></label>
+            <div class="field lab-field-col"><span class="tool-label">Modèle</span><span class="seg" id="sy-model"><button type="button" data-v="projet" aria-pressed="true">projet</button><button type="button" data-v="augmente" aria-pressed="false">augmenté</button></span></div>
+            <div class="lab-row"><button type="button" class="btn" id="sy-run">Injecter et analyser</button></div>
+            <figure class="lab-template"><svg id="sy-tpl" viewBox="0 0 240 70" role="img" aria-label="Gabarit : deux cycles pointe-onde"></svg><figcaption class="lab-dim lab-small">Gabarit (2 cycles) : pointe d’environ 70 ms puis onde lente.</figcaption></figure>
+          </div>
+          <div id="st-syn-out" class="lab-synth-out"></div>
+        </div>
+      </section>
+
+      <section class="lab-sec">
+        <h2 class="h2 lab-h2"><span class="lab-letter">c</span>Carte de détection</h2>
+        <p class="body lab-body">Le balayage refait l’injection et toute la chaîne pour chaque couple fréquence × amplitude, avec la durée et la régularité choisies ci-dessus.</p>
+        <div class="lab-row"><button type="button" class="btn" id="mp-run">Cartographier</button><span class="lab-dim lab-small" id="mp-state"></span></div>
+        <div class="progress lab-progress" id="mp-progress" hidden><span id="mp-bar"></span></div>
+        <div id="mp-out"></div>
+      </section>
+    </div>
+    <!-- ---------- 4. Électrodes ---------- -->
+    <div class="lab-pane" id="lab-electrodes" role="tabpanel" data-tab="electrodes" hidden>
+      <p class="lab-banner" role="note"><b>Et si une électrode lâche ?</b> Retirez ou corrompez des électrodes, changez la référence : la détection des 19 enregistrements est refaite avec les modèles « sans l’enregistrement », entraînés sur des données intactes.<br>C’est la situation réelle : une électrode se décolle pendant l’examen, et le détecteur doit tenir.</p>
+      <div id="el-body"></div>
+    </div>
+
+    <!-- ---------- 5. Augmentation ---------- -->
+    <div class="lab-pane" id="lab-augmentation" role="tabpanel" data-tab="augmentation" hidden>
+      <p class="lab-banner" role="note"><b>Augmentation de données.</b> On fabrique de nouvelles fenêtres d’entraînement en modifiant légèrement les vraies (crises moins amples, polarité inversée, voie retirée ou en panne), puis on ré-entraîne le modèle.<br>Objectif : corriger les deux faiblesses mesurées, la dépendance à l’amplitude et la fragilité aux électrodes, sans jamais toucher à l’enregistrement testé.</p>
+      <div id="au-body"></div>
+    </div>
+  </section>
+
+  <!-- ===================================================== 5. Patients -->
+  <section class="page page-patients" id="page-patients" data-title="Patients" hidden>
+    <header class="article-head wide">
+      <p class="kicker">Patients</p>
+      <h1 class="display">Les enregistrements, un par un</h1>
+      <div class="facts" id="pat-facts"></div>
+    </header>
+    <div id="pat-tools" class="pat-tools"></div>
+    <div id="pat-body"></div>
+  </section>
+
+  <!-- ===================================================== 6. Erreurs -->
+  <section class="page page-errors" id="page-erreurs" data-title="Erreurs" hidden>
+    <header class="article-head wide">
+      <p class="kicker">Erreurs</p>
+      <h1 class="display">Ce que le modèle a manqué, ce qu’il a vu de trop</h1>
+      <p class="lede" id="err-intro"></p>
+    </header>
+    <div class="kpis" id="err-kpis" hidden></div>
+    <div class="filters" id="err-filters" role="group" aria-label="Filtres" hidden>
+      <label class="field"><span class="tool-label">Enregistrement</span><select id="err-rec"></select></label>
+      <span class="field" role="radiogroup" aria-label="Type d’erreur">
+        <span class="tool-label">Type</span>
+        <span class="seg" id="err-type">
+          <button type="button" data-v="tout" aria-pressed="true">tout</button>
+          <button type="button" data-v="manquee" aria-pressed="false">crises manquées</button>
+          <button type="button" data-v="fausse_alarme" aria-pressed="false">fausses alarmes</button>
+        </span>
+      </span>
+      <label class="field check"><input type="checkbox" id="err-sat"> proche d’une saturation</label>
+      <span class="filters-end"><span id="err-count" class="mono"></span><button type="button" class="btn btn-quiet" id="err-export"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14"/></svg>Exporter (CSV)</button></span>
+    </div>
+    <div id="err-body"></div>
+  </section>
+
+  <!-- ===================================================== 6 bis. Découverte -->
+  <section class="page page-decouverte" id="page-decouverte" data-title="Découverte" hidden>
+    <header class="article-head wide">
+      <p class="kicker">Découverte · étude exploratoire du notebook</p>
+      <h1 class="display">Des crises que personne n’a annotées&nbsp;?</h1>
+      <p class="ant-banner" role="note">Analyse non supervisée : un réseau entraîné uniquement sur de l’EEG normal signale ce qui ne lui ressemble pas. Les résultats sont des pistes à vérifier par un neurologue.</p>
+    </header>
+    <div id="dec-body"></div>
+  </section>
+
+  <!-- ===================================================== 7. Anticipation -->
+  <section class="page page-anticipation" id="page-anticipation" data-title="Anticipation" hidden>
+    <header class="article-head wide">
+      <p class="kicker">Anticipation</p>
+      <h1 class="display">Peut-on annoncer une crise avant son début ?</h1>
+      <p class="ant-banner" role="note">Analyse exploratoire, au-delà de l’énoncé. Le projet réalise la détection ; ici on teste si une crise peut être annoncée quelques secondes avant son début.</p>
+    </header>
+    <div class="ant-explain">
+      <div class="ant-text">
+        <p class="body"><strong>Détecter</strong>, c’est reconnaître une crise qui a déjà commencé : les pointes-ondes sont là, le modèle les voit. C’est ce que fait tout le reste de ce site.</p>
+        <p class="body"><strong>Anticiper</strong>, c’est donner l’alerte alors que la crise n’a pas encore commencé, en ne regardant que le signal qui la précède. C’est beaucoup plus difficile : rien ne garantit que l’EEG change avant une absence.</p>
+        <p class="body">Pour le tester, on sépare trois moments : le tracé loin de toute crise, les quelques secondes qui précèdent le début, et la crise elle-même.</p>
+      </div>
+      <figure class="ant-timeline" aria-label="Schéma : période inter-critique, période pré-critique de H secondes, puis crise">
+        <svg viewBox="0 0 560 150" role="img" aria-hidden="true" focusable="false">
+          <rect class="tl-inter" x="10" y="52" width="290" height="34" rx="6"/>
+          <rect class="tl-pre" x="300" y="52" width="110" height="34" rx="0"/>
+          <rect class="tl-crise" x="410" y="52" width="140" height="34" rx="6"/>
+          <line class="tl-onset" x1="410" y1="34" x2="410" y2="104"/>
+          <text class="tl-lab" x="155" y="74" text-anchor="middle">inter-critique</text>
+          <text class="tl-lab" x="355" y="74" text-anchor="middle">pré-critique</text>
+          <text class="tl-lab" x="480" y="74" text-anchor="middle">crise</text>
+          <text class="tl-note" x="410" y="26" text-anchor="middle">début de la crise</text>
+          <path class="tl-brace" d="M300 100 v8 h110 v-8"/>
+          <text class="tl-note" x="355" y="126" text-anchor="middle">H secondes : l’horizon</text>
+          <text class="tl-note" x="155" y="126" text-anchor="middle">loin de toute crise</text>
+          <text class="tl-note" x="486" y="126" text-anchor="middle">la détection</text>
+        </svg>
+        <figcaption class="caption">Anticiper, c’est reconnaître la période pré-critique. Détecter, c’est reconnaître la crise.</figcaption>
+      </figure>
+    </div>
+    <div id="ant-body"></div>
+    <div id="ant-age"></div>
+  </section>
+
+  <!-- ===================================================== 8. Modèles -->
+  <section class="page page-models" id="page-modeles" data-title="Modèles" hidden>
+    <header class="article-head wide">
+      <p class="kicker">Modèles · dossier <span class="mono">resultats/</span> et recalculs de l’application</p>
+      <h1 class="display">Les modèles comparés, et deux façons de les évaluer</h1>
+    </header>
+    <div class="empty" id="models-msg" hidden><p class="empty-title">Résultats indisponibles</p><p class="empty-text" id="models-msg-text"></p></div>
+    <div id="models-body" hidden>
+      <nav class="r-toc m-tabs" id="models-tabs" role="tablist" aria-label="Parties de la page" hidden></nav>
+      <div id="models-plus" hidden></div>
+
+      <h2 class="h2 models-first-h2" id="models-first-h2" hidden>Les classifieurs du notebook d’origine</h2>
+      <div class="models-grid">
+        <div>
+          <h3 class="h3">Comparaison des classifieurs <span class="h3-note">par fenêtre · découpage aléatoire stratifié</span></h3>
+          <table class="tbl tbl-models" id="models-table"><thead></thead><tbody></tbody></table>
+          <p class="tbl-foot">Souligné en lavande : meilleure valeur de la colonne. Valeurs lues dans <span class="mono">resultats_modeles.csv</span>.</p>
+        </div>
+        <figure class="chart">
+          <figcaption class="h3">F1 et rappel par modèle</figcaption>
+          <p class="chart-legend"><span class="dot dot-f1" aria-hidden="true"></span>F1 <span class="dot dot-rec" aria-hidden="true"></span>rappel</p>
+          <div id="chart"></div>
+        </figure>
+      </div>
+
+      <section class="models-section" id="gkf-section">
+        <h2 class="h2">Évaluer par enregistrement</h2>
+        <div id="gkf-body"></div>
+      </section>
+
+      <section class="models-section" id="smooth-section">
+        <h2 class="h2">Le lissage, mesuré honnêtement</h2>
+        <div id="smooth-body"></div>
+      </section>
+
+      <section class="models-section banc" data-mtab="banc" hidden><div id="banc-body"></div></section>
+
+      <section class="models-section per-rec">
+        <h2 class="h2">Détection par enregistrement</h2>
+        <p class="subline" id="per-rec-summary"></p>
+        <table class="tbl tbl-rec" id="perrec-table">
+          <thead><tr><th>Enregistrement</th><th class="num">Crises réelles</th><th class="num">Détectées</th><th class="num">Manquées</th><th class="num">Fausses alarmes</th><th class="num">Sensibilité</th></tr></thead>
+          <tbody></tbody>
+          <tfoot></tfoot>
+        </table>
+        <p class="tbl-foot" id="csv-check"></p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===================================================== 8. Recherche -->
+  <section class="page page-research" id="page-recherche" data-title="Recherche" hidden>
+    <header class="article-head wide">
+      <p class="kicker">Recherche · analyses du notebook, dossier <span class="mono">resultats_local/</span></p>
+      <h1 class="display">Ce que les crises et le modèle nous apprennent</h1>
+      <p class="lede">Au-delà de la détection : la taille des fenêtres, le rythme au fil d’une crise, les types de crises, ce que le modèle regarde, le nombre de patients nécessaire et le rôle de l’âge.</p>
+    </header>
+    <div id="rech-body"></div>
+  </section>
+
+  <!-- ===================================================== 9. Limites -->
+  <section class="page page-limits" id="page-limites" data-title="Limites et pistes" hidden>
+    <header class="article-head">
+      <p class="kicker">Limites et pistes</p>
+      <h1 class="display">Ce que ce travail permet de dire, et ce qu’il ne permet pas</h1>
+    </header>
+    <div id="lim-body"></div>
+  </section>
+</main>
+
+<footer class="site-foot">
+  <p class="foot-note">Outil d’aide à l’analyse, ne remplace pas l’avis d’un neurologue.</p>
+  <p class="foot-authors">ELAKREMI Chaima — ENIT, Data Mining 2025–2026</p>
+</footer>
+
+<script src="/static/js/base.js?v=23"></script>
+<script src="/static/js/lecture.js?v=23"></script>
+<script src="/static/js/pages.js?v=23"></script>
+<script src="/static/js/resultats.js?v=23"></script>
+<script src="/static/js/recherche.js?v=23"></script>
+<script src="/static/js/anticipation.js?v=23"></script>
+<script src="/static/js/laboratoire.js?v=23"></script>
+<script src="/static/js/outils.js?v=23"></script>
+<script src="/static/js/etudes.js?v=23"></script>
+<script src="/static/js/augment.js?v=23"></script>
+<script src="/static/js/nav.js?v=23"></script>
+<script src="/static/js/methode_tour.js?v=23"></script>
+<script src="/static/js/router.js?v=23"></script>
+</body>
+</html>

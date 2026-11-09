@@ -1,0 +1,40 @@
+# --- Dataset (provided for the course, must never be published) ---
+data/
+*.mat
+*.edf
+*.xlsx
+*.xls
+
+# --- Generated results and caches (derived from the dataset) ---
+.cache/
+resultats/
+resultats_local/
+*.csv
+*.npz
+*.npy
+*.joblib
+*.pkl
+*.h5
+*.log
+
+# --- Internal design mockups (screenshots of course data) ---
+design-proposal/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.env
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
